@@ -23,25 +23,52 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Building packages
-        uses: sbwml/openwrt-gh-action-sdk@main
-        env:
-          ARCH: ${{ matrix.arch }}-openwrt-23.05
-          FEEDNAME: packages
-          PACKAGES: luci-app-parentcontrol
-          NO_REFRESH_CHECK: true
+      - name: Set up build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext libssl-dev xsltproc wget unzip python3 python3-distutils
+
+      - name: Download and extract OpenWrt SDK
+        run: |
+          ARCH=${{ matrix.arch }}
+          VERSION=23.05.0
+          case $ARCH in
+            aarch64_generic)
+              SDK_URL="https://downloads.openwrt.org/releases/${VERSION}/targets/armvirt/64/openwrt-sdk-${VERSION}-armvirt-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+              ;;
+            mipsel_24kc)
+              SDK_URL="https://downloads.openwrt.org/releases/${VERSION}/targets/ramips/mt7620/openwrt-sdk-${VERSION}-ramips-mt7620_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+              ;;
+            x86_64)
+              SDK_URL="https://downloads.openwrt.org/releases/${VERSION}/targets/x86/64/openwrt-sdk-${VERSION}-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+              ;;
+          esac
+          wget -q $SDK_URL -O openwrt-sdk.tar.xz
+          tar -xf openwrt-sdk.tar.xz
+          mv openwrt-sdk-* openwrt-sdk
+
+      - name: Set up feeds and build package
+        run: |
+          cd openwrt-sdk
+          echo "src-git luci https://github.com/openwrt/luci.git;openwrt-23.05" >> feeds.conf.default
+          echo "src-link packages $(pwd)/../" >> feeds.conf.default
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          ./scripts/feeds install luci-app-parentcontrol
+          make defconfig
+          make package/luci-app-parentcontrol/compile -j$(nproc)
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.arch }}
-          path: bin/packages/${{ matrix.arch }}/packages/*.ipk
+          path: openwrt-sdk/bin/packages/*/packages/*.ipk
 
-      - name: Upload packages
+      - name: Upload packages to release
         uses: ncipollo/release-action@v1
         with:
           name: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
           replacesArtifacts: true
-          artifacts: "bin/packages/${{ matrix.arch }}/packages/*.ipk"
+          artifacts: "openwrt-sdk/bin/packages/*/packages/*.ipk"
