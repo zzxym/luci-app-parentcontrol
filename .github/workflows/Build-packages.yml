@@ -50,8 +50,8 @@ jobs:
       - name: Set up feeds and build package
         run: |
           cd openwrt-sdk
-          # Remove existing luci feed if present
-          grep -v "src-git luci" feeds.conf.default > feeds.conf.default.tmp && mv feeds.conf.default.tmp feeds.conf.default
+          # Remove existing feeds that we want to replace
+          grep -v -E "(src-git luci|src-link packages|src-git packages)" feeds.conf.default > feeds.conf.default.tmp && mv feeds.conf.default.tmp feeds.conf.default
           # Add luci feed and local package feed
           echo "src-git luci https://github.com/openwrt/luci.git;openwrt-23.05" >> feeds.conf.default
           echo "src-link packages $(pwd)/../" >> feeds.conf.default
