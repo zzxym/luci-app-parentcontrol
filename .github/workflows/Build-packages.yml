@@ -27,7 +27,7 @@ jobs:
         uses: sbwml/openwrt-gh-action-sdk@main
         env:
           ARCH: ${{ matrix.arch }}-openwrt-24.10
-          FEEDNAME: packages_ci
+          FEEDNAME: packages
           PACKAGES: luci-app-parentcontrol
           NO_REFRESH_CHECK: true
 
