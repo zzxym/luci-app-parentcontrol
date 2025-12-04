@@ -2,6 +2,7 @@ config basic
 	option algos 'kmp'
 	option control_mode '0'
 	option enabled '0'
+	option mode 'blacklist'
 
 config weburl
 	option word 'baidu'

@@ -30,6 +30,12 @@ e.rmempty = false
 e:value("0", "普通管控")
 e.default = "0"
 
+e = t:option(ListValue, "mode", translate("工作模式"), translate("黑名单模式：阻止访问指定网站；白名单模式：只允许访问指定网站"))
+e:value("blacklist", "黑名单模式")
+e:value("whitelist", "白名单模式")
+e.default = "blacklist"
+e.rmempty = false
+
 t = a:section(TypedSection, "weburl", translate("网址过滤列表"))
 t.template = "cbi/tblsection"
 t.anonymous = true
